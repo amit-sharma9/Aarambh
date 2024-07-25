@@ -29,7 +29,9 @@ def main():
     sheet_name = 'List of NBFCs'
     df = pd.read_excel(file_path, sheet_name=sheet_name)
     print(df.head())
-    df_subset = df.head(10)
+    
+
+    
     df['Official Website'] = ""
 
     def process_row(index, row):
@@ -41,7 +43,7 @@ def main():
         return index, official_website
 
     with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(process_row, index, row): index for index, row in df_subset.iterrows()}
+        futures = {executor.submit(process_row, index, row): index for index, row in df.iterrows()}
         for future in as_completed(futures):
             index, official_website = future.result()
             df.at[index, 'Official Website'] = official_website
