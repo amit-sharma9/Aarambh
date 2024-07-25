@@ -14,8 +14,7 @@ def init_driver():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     return driver
 
-def get_official_website(nbfc_name, regional_office, address, email_id):
-    driver = init_driver()
+def get_official_website(driver, nbfc_name, regional_office, address, email_id):
     search_query = f"{nbfc_name} official website"
     search_url = f"https://www.google.com/search?q={search_query}"
     driver.get(search_url)
@@ -29,8 +28,17 @@ def get_official_website(nbfc_name, regional_office, address, email_id):
     except Exception as e:
         print(f"Error finding official website for {nbfc_name}: {str(e)}")
         official_link = "Not found"
+    return official_link
+
+def process_row(index, row):
+    nbfc_name = row['NBFC Name']
+    regional_office = row['Regional Office']
+    address = row['Address']
+    email_id = row['Email ID']
+    driver = init_driver()
+    official_website = get_official_website(driver, nbfc_name, regional_office, address, email_id)
     driver.quit()
-    return nbfc_name, official_link
+    return index, official_website
 
 def main():
     start_time = time.time()
@@ -38,22 +46,15 @@ def main():
     sheet_name = 'List of NBFCs'
     df = pd.read_excel(file_path, sheet_name=sheet_name)
     print(df.head())
-    df_subset = df.head(10)
+    
+    
     df['Official Website'] = ""
 
-    def process_row(index, row):
-        nbfc_name = row['NBFC Name']
-        regional_office = row['Regional Office']
-        address = row['Address']
-        email_id = row['Email ID']
-        official_website = get_official_website(nbfc_name, regional_office, address, email_id)
-        return index, official_website
-
     with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {executor.submit(process_row, index, row): index for index, row in df_subset.iterrows()}
+        futures = {executor.submit(process_row, index, row): index for index, row in df.iterrows()}
         for future in as_completed(futures):
             index, official_website = future.result()
-            df.at[index, 'Official Website'] = official_website[1]
+            df.at[index, 'Official Website'] = official_website
 
     columns_to_export = ['Regional Office', 'NBFC Name', 'Address', 'Email ID', 'Official Website']
     output_file_path = 'output_nbfc_list.xlsx'
