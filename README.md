@@ -1,0 +1,1 @@
+When I first ran the file(nbfc_website_identification.py), it gave me some websites. However, when I ran it again, it didn’t work. I think Google might have detected me as a bot because it is now returning 'not found' for all queries
